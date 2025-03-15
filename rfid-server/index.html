@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RFID Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    form {
+      margin-bottom: 20px;
+    }
+    label, input {
+      display: block;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+  <h1>RFID Management</h1>
+  
+  <h2>Add UID Card</h2>
+  <form id="addUserForm">
+    <label for="uid">UID:</label>
+    <input type="text" id="uid" name="uid" required>
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" required>
+    <button type="submit">Add User</button>
+  </form>
+
+  <h2>Update UID Card Name</h2>
+  <form id="updateUserForm">
+    <label for="updateUid">UID:</label>
+    <input type="text" id="updateUid" name="updateUid" required>
+    <label for="updateName">New Name:</label>
+    <input type="text" id="updateName" name="updateName" required>
+    <button type="submit">Update User</button>
+  </form>
+
+  <script>
+    // Add User
+    document.getElementById('addUserForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const uid = document.getElementById('uid').value;
+      const name = document.getElementById('name').value;
+
+      fetch('/api/add_user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ uid, name })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          alert('User added successfully!');
+          document.getElementById('addUserForm').reset();
+        } else {
+          alert('Error adding user.');
+        }
+      })
+      .catch(error => console.error('Error:', error));
+    });
+
+    // Update User
+    document.getElementById('updateUserForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const uid = document.getElementById('updateUid').value;
+      const name = document.getElementById('updateName').value;
+
+      fetch('/api/update_user', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ uid, name })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          alert('User updated successfully!');
+          document.getElementById('updateUserForm').reset();
+        } else {
+          alert('Error updating user.');
+        }
+      })
+      .catch(error => console.error('Error:', error));
+    });
+  </script>
+</body>
+</html>
