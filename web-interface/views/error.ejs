@@ -1,0 +1,68 @@
+<%- contentFor('body') %>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="error-page">
+                <h1 class="display-1 text-primary mb-4">
+                    <%= typeof status !== 'undefined' ? status : 500 %>
+                </h1>
+                <h2 class="display-4 mb-4">
+                    <%= typeof message !== 'undefined' ? message : 'Something went wrong!' %>
+                </h2>
+                <div class="error-details mb-4">
+                    <% if (process.env.NODE_ENV === 'development' && typeof error !== 'undefined') { %>
+                        <div class="alert alert-danger">
+                            <pre class="mb-0"><%= JSON.stringify(error, null, 2) %></pre>
+                        </div>
+                    <% } %>
+                </div>
+                <div class="error-actions">
+                    <a href="/" class="btn btn-primary btn-lg me-3">
+                        <i class="bi bi-house-door me-2"></i>Return Home
+                    </a>
+                    <button onclick="window.history.back()" class="btn btn-outline-primary btn-lg">
+                        <i class="bi bi-arrow-left me-2"></i>Go Back
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-page {
+    padding: 40px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.error-page h1 {
+    font-size: 120px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.error-details pre {
+    text-align: left;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.error-actions {
+    margin-top: 30px;
+}
+
+.btn {
+    padding: 12px 30px;
+    font-weight: 500;
+}
+
+.bi {
+    font-size: 1.2em;
+    vertical-align: -0.125em;
+}
+</style> 

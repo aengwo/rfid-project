@@ -1,0 +1,136 @@
+<%- contentFor('body') %>
+<!-- Contact Header -->
+<section class="bg-primary text-white py-5">
+    <div class="container">
+        <h1 class="display-4 fw-bold">Contact Us</h1>
+        <p class="lead">Get in touch with our team</p>
+    </div>
+</section>
+
+<!-- Contact Form -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h2 class="mb-4">Send us a Message</h2>
+                <form id="contactForm" action="/contact" method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="subject" name="subject" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <h2 class="mb-4">Contact Information</h2>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h3 class="h5">
+                                <i class="bi bi-geo-alt text-primary me-2"></i>
+                                Address
+                            </h3>
+                            <p>Chuka University<br>
+                            Chuka, Tharaka Nithi<br>
+                            Kenya</p>
+                        </div>
+                        <div class="mb-4">
+                            <h3 class="h5">
+                                <i class="bi bi-telephone text-primary me-2"></i>
+                                Phone
+                            </h3>
+                            <p>+254705557002</p>
+                        </div>
+                        <div class="mb-4">
+                            <h3 class="h5">
+                                <i class="bi bi-envelope text-primary me-2"></i>
+                                Email
+                            </h3>
+                            <p>aengwodavis09@gmail.com</p>
+                        </div>
+                        <div>
+                            <h3 class="h5">
+                                <i class="bi bi-clock text-primary me-2"></i>
+                                Business Hours
+                            </h3>
+                            <p>Monday - Friday: 9:00 AM - 5:00 PM<br>
+                            Saturday - Sunday: Closed</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Map Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-4">Our Location</h2>
+        <div class="ratio ratio-16x9">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.2155710122!2d-73.98784492416467!3d40.75797897138939!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c25855c6480299%3A0x55194ec5a1ae072e!2sTimes%20Square!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus" 
+                    style="border:0;" 
+                    allowfullscreen="" 
+                    loading="lazy" 
+                    referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Frequently Asked Questions</h2>
+        <div class="accordion" id="faqAccordion">
+            <div class="accordion-item">
+                <h3 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                        How does the RFID security system work?
+                    </button>
+                </h3>
+                <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Our RFID security system uses radio frequency identification technology to authenticate and grant access to authorized personnel. Each user is assigned a unique RFID card that communicates with our readers to verify access permissions.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h3 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                        Can I integrate the system with my existing security infrastructure?
+                    </button>
+                </h3>
+                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        Yes, our system is designed to be compatible with most existing security infrastructure. We provide APIs and support for various integration protocols to ensure seamless implementation.
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h3 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                        What kind of support do you offer?
+                    </button>
+                </h3>
+                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        We offer 24/7 technical support, regular system updates, and comprehensive training for your staff. Our support team is always ready to assist you with any questions or issues.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section> 

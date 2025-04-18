@@ -1,0 +1,163 @@
+<!-- Access Logs Header -->
+<section class="bg-primary text-white py-5">
+    <div class="container">
+        <h1 class="display-4 fw-bold">UniScan Access Logs</h1>
+        <p class="lead">View system access history</p>
+    </div>
+</section>
+
+<!-- Access Logs Content -->
+<section class="py-5">
+    <div class="container">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-check text-primary me-2"></i>
+                    Recent Access Logs
+                </h5>
+                <div class="btn-group">
+                    <button class="btn btn-outline-primary" id="refreshLogs">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                    <button class="btn btn-outline-primary" id="exportLogs">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="accessLogsTable">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>User</th>
+                                <th>RFID Card ID</th>
+                                <th>Access Point</th>
+                                <th>Time In</th>
+                                <th>Time Out</th>
+                                <th>Status</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Logs will be loaded here via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Error Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+            <strong class="me-auto">Error</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="errorToastMessage">
+            An error occurred while loading the logs.
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const accessLogsTable = document.getElementById('accessLogsTable').getElementsByTagName('tbody')[0];
+    const refreshButton = document.getElementById('refreshLogs');
+    const exportButton = document.getElementById('exportLogs');
+    const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+    const errorToastMessage = document.getElementById('errorToastMessage');
+
+    // Function to format date or show placeholder
+    function formatDateTime(dateString) {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleString();
+    }
+
+    // Function to load access logs
+    async function loadAccessLogs() {
+        try {
+            const response = await fetch('/api/admin/access-logs', {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const logs = await response.json();
+                accessLogsTable.innerHTML = ''; // Clear existing rows
+                
+                logs.forEach(log => {
+                    const row = accessLogsTable.insertRow();
+                    row.innerHTML = `
+                        <td>${new Date(log.createdAt).toLocaleString()}</td>
+                        <td>${log.User ? log.User.name : 'Unknown'}</td>
+                        <td>${log.rfidCardId}</td>
+                        <td>${log.accessPoint}</td>
+                        <td>${formatDateTime(log.timeIn)}</td>
+                        <td>${formatDateTime(log.timeOut)}</td>
+                        <td>
+                            <span class="badge ${log.status === 'granted' ? 'bg-success' : 'bg-danger'}">
+                                ${log.status}
+                            </span>
+                        </td>
+                        <td>${log.reason || '-'}</td>
+                    `;
+                });
+            } else {
+                if (response.status === 401) {
+                    window.location.href = '/admin/login';
+                } else {
+                    throw new Error('Failed to load access logs');
+                }
+            }
+        } catch (error) {
+            console.error('Error loading access logs:', error);
+            errorToastMessage.textContent = 'Failed to load access logs';
+            errorToast.show();
+        }
+    }
+
+    // Function to export logs as CSV
+    async function exportLogs() {
+        try {
+            const response = await fetch('/api/admin/export_logs', {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const { data } = await response.json();
+                
+                // Create download link
+                const encodedUri = encodeURI('data:text/csv;charset=utf-8,' + data);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `access_logs_${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                throw new Error('Failed to export logs');
+            }
+        } catch (error) {
+            console.error('Error exporting logs:', error);
+            errorToastMessage.textContent = 'Failed to export logs';
+            errorToast.show();
+        }
+    }
+
+    // Event listeners
+    refreshButton.addEventListener('click', loadAccessLogs);
+    exportButton.addEventListener('click', exportLogs);
+
+    // Load logs on page load
+    loadAccessLogs();
+});
+</script> 

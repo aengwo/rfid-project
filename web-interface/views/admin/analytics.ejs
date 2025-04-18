@@ -1,0 +1,491 @@
+<!-- Analytics Dashboard Header -->
+<section class="bg-primary text-white py-5">
+    <div class="container">
+        <h1 class="display-4 fw-bold">UniScan Analytics Dashboard</h1>
+        <p class="lead">Visualize student attendance and campus population data</p>
+    </div>
+</section>
+
+<!-- Live Campus Population Section -->
+<section class="py-4">
+    <div class="container">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-people-fill text-primary me-2"></i>
+                    Live Campus Population
+                </h5>
+                <button class="btn btn-sm btn-outline-primary" id="refreshLiveData">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <h3 class="h5 mb-3">School of Science</h3>
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-building text-primary me-2 fs-1"></i>
+                                    <span class="display-5 fw-bold" id="scienceCount">0</span>
+                                </div>
+                                <p class="text-muted mt-3">Currently in building</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <h3 class="h5 mb-3">School of Engineering</h3>
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-gear text-primary me-2 fs-1"></i>
+                                    <span class="display-5 fw-bold" id="engineeringCount">0</span>
+                                </div>
+                                <p class="text-muted mt-3">Currently in building</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <h3 class="h5 mb-3">School of Medicine</h3>
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-heart-pulse text-primary me-2 fs-1"></i>
+                                    <span class="display-5 fw-bold" id="medicineCount">0</span>
+                                </div>
+                                <p class="text-muted mt-3">Currently in building</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Live Student Tracking Section -->
+<section class="py-4">
+    <div class="container">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-geo-alt-fill text-primary me-2"></i>
+                    Live Student Tracking
+                </h5>
+                <button class="btn btn-sm btn-outline-primary" id="refreshStudentTracking">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-building text-primary me-2"></i>
+                                    School of Science
+                                </h5>
+                                <span class="badge bg-primary" id="scienceStudentCount">0</span>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="list-group list-group-flush" id="scienceStudents" style="max-height: 300px; overflow-y: auto;">
+                                    <div class="list-group-item text-center py-4">
+                                        <span class="text-muted">Loading students...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-gear text-primary me-2"></i>
+                                    School of Engineering
+                                </h5>
+                                <span class="badge bg-primary" id="engineeringStudentCount">0</span>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="list-group list-group-flush" id="engineeringStudents" style="max-height: 300px; overflow-y: auto;">
+                                    <div class="list-group-item text-center py-4">
+                                        <span class="text-muted">Loading students...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-heart-pulse text-primary me-2"></i>
+                                    School of Medicine
+                                </h5>
+                                <span class="badge bg-primary" id="medicineStudentCount">0</span>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="list-group list-group-flush" id="medicineStudents" style="max-height: 300px; overflow-y: auto;">
+                                    <div class="list-group-item text-center py-4">
+                                        <span class="text-muted">Loading students...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Charts Section -->
+<section class="py-4">
+    <div class="container">
+        <div class="row">
+            <!-- Student Hours Chart -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history text-primary me-2"></i>
+                            Top 10 Students by Hours in School
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="studentHoursChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Campus Traffic Chart -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up text-primary me-2"></i>
+                            Daily Campus Traffic
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="campusTrafficChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Weekly Trends Section -->
+<section class="py-4">
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-calendar-week text-primary me-2"></i>
+                    Weekly Attendance Patterns
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="weeklyPatternChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const refreshButton = document.getElementById('refreshLiveData');
+    const refreshStudentTrackingButton = document.getElementById('refreshStudentTracking');
+    
+    // Function to fetch live population data
+    async function fetchLivePopulation() {
+        try {
+            const response = await fetch('/api/admin/live-population', {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Update the counters
+                document.getElementById('scienceCount').textContent = data.science || 0;
+                document.getElementById('engineeringCount').textContent = data.engineering || 0;
+                document.getElementById('medicineCount').textContent = data.medicine || 0;
+            } else {
+                console.error('Failed to fetch live population data');
+            }
+        } catch (error) {
+            console.error('Error fetching live population data:', error);
+        }
+    }
+    
+    // Function to fetch live student tracking data
+    async function fetchLiveStudentTracking() {
+        try {
+            const response = await fetch('/api/admin/live-student-tracking', {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Update student lists for each building
+                updateStudentList('scienceStudents', data['School of Science']);
+                updateStudentList('engineeringStudents', data['School of Engineering']);
+                updateStudentList('medicineStudents', data['School of Medicine']);
+            } else {
+                console.error('Failed to fetch live student tracking data');
+            }
+        } catch (error) {
+            console.error('Error fetching live student tracking data:', error);
+        }
+    }
+    
+    // Helper function to update student list for a building
+    function updateStudentList(elementId, students) {
+        const listElement = document.getElementById(elementId);
+        const countElementId = elementId.replace('Students', 'StudentCount');
+        const countElement = document.getElementById(countElementId);
+        
+        listElement.innerHTML = '';
+        countElement.textContent = students.length;
+        
+        if (students.length === 0) {
+            listElement.innerHTML = `
+                <div class="list-group-item text-center py-4">
+                    <span class="text-muted">No students currently in building</span>
+                </div>
+            `;
+            return;
+        }
+        
+        // Limit to showing first 100 students for performance
+        const showStudents = students.length > 100 ? students.slice(0, 100) : students;
+        const hasMoreStudents = students.length > 100;
+        
+        showStudents.forEach(student => {
+            const listItem = document.createElement('div');
+            listItem.className = 'list-group-item';
+            listItem.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">${student.name}</h6>
+                        <small class="text-muted">ID: ${student.rfidCardId}</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-info">${student.role || 'Student'}</span>
+                        <div><small class="text-muted">In: ${student.timeIn}</small></div>
+                    </div>
+                </div>
+            `;
+            listElement.appendChild(listItem);
+        });
+        
+        // Add message if we're not showing all students
+        if (hasMoreStudents) {
+            const moreMessage = document.createElement('div');
+            moreMessage.className = 'list-group-item text-center py-2';
+            moreMessage.innerHTML = `
+                <span class="text-muted">Showing 100 of ${students.length} students...</span>
+            `;
+            listElement.appendChild(moreMessage);
+        }
+    }
+    
+    // Function to fetch student hours data
+    async function fetchStudentHours() {
+        try {
+            const response = await fetch('/api/admin/student-hours', {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Create the student hours chart
+                const studentHoursCtx = document.getElementById('studentHoursChart').getContext('2d');
+                new Chart(studentHoursCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(item => item.name),
+                        datasets: [{
+                            label: 'Hours in School (Last 30 Days)',
+                            data: data.map(item => item.hours),
+                            backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                            borderColor: 'rgba(13, 110, 253, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Hours'
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                console.error('Failed to fetch student hours data');
+            }
+        } catch (error) {
+            console.error('Error fetching student hours data:', error);
+        }
+    }
+    
+    // Function to fetch campus traffic data
+    async function fetchCampusTraffic() {
+        try {
+            const response = await fetch('/api/admin/campus-traffic', {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Create the campus traffic chart
+                const campusTrafficCtx = document.getElementById('campusTrafficChart').getContext('2d');
+                new Chart(campusTrafficCtx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [
+                            {
+                                label: 'School of Science',
+                                data: data.science,
+                                borderColor: 'rgba(13, 110, 253, 1)',
+                                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                                fill: true
+                            },
+                            {
+                                label: 'School of Engineering',
+                                data: data.engineering,
+                                borderColor: 'rgba(220, 53, 69, 1)',
+                                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                                fill: true
+                            },
+                            {
+                                label: 'School of Medicine',
+                                data: data.medicine,
+                                borderColor: 'rgba(25, 135, 84, 1)',
+                                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Visits'
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                console.error('Failed to fetch campus traffic data');
+            }
+        } catch (error) {
+            console.error('Error fetching campus traffic data:', error);
+        }
+    }
+    
+    // Function to fetch weekly pattern data
+    async function fetchWeeklyPattern() {
+        try {
+            const response = await fetch('/api/admin/weekly-pattern', {
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Create the weekly pattern chart
+                const weeklyPatternCtx = document.getElementById('weeklyPatternChart').getContext('2d');
+                new Chart(weeklyPatternCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+                        datasets: [
+                            {
+                                label: 'School of Science',
+                                data: data.science,
+                                backgroundColor: 'rgba(13, 110, 253, 0.7)'
+                            },
+                            {
+                                label: 'School of Engineering',
+                                data: data.engineering,
+                                backgroundColor: 'rgba(220, 53, 69, 0.7)'
+                            },
+                            {
+                                label: 'School of Medicine',
+                                data: data.medicine,
+                                backgroundColor: 'rgba(25, 135, 84, 0.7)'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Average Daily Visits'
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                console.error('Failed to fetch weekly pattern data');
+            }
+        } catch (error) {
+            console.error('Error fetching weekly pattern data:', error);
+        }
+    }
+    
+    // Refresh live data when button is clicked
+    refreshButton.addEventListener('click', fetchLivePopulation);
+    refreshStudentTrackingButton.addEventListener('click', fetchLiveStudentTracking);
+    
+    // Load all data on page load
+    fetchLivePopulation();
+    fetchLiveStudentTracking();
+    fetchStudentHours();
+    fetchCampusTraffic();
+    fetchWeeklyPattern();
+    
+    // Refresh live data every 30 seconds
+    setInterval(fetchLivePopulation, 30000);
+    setInterval(fetchLiveStudentTracking, 30000);
+});
+</script> 
