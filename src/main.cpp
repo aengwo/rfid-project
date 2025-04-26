@@ -4,6 +4,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <time.h>
+#include <ArduinoJson.h>
 
 // RFID pins
 #define RST_PIN D3  // GPIO0
@@ -16,21 +17,58 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);
 #define LED_PIN D2      // GPIO4
 
 // Wi-Fi credentials
-const char* ssid = "A9";
-const char* password = "Nunzema21";
+const char* ssid = "657";
+const char* password = "12345678";
 
 // Server details
-const char* serverName = "http://192.168.100.4:3000";  // Replace with your server IP
+// Update this line to use your PC's hotspot IP address
+const char* serverName = "http://192.168.137.1:3000";
 
 // Function prototypes
 bool checkAccess(String uid);
-void logAccess(String uid);
+void logAccess(String uid, bool accessGranted);
 String getTimeStamp();
+bool addNewUser(String uid, String userName);
+bool updateUserName(String uid, String newName);
+void handleError(int errorCode);
+void retryWiFiConnection();
+void testServerConnection();
+
+// Error handling
+void handleError(int errorCode) {
+  Serial.printf("Error occurred: %d\n", errorCode);
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(LED_PIN, HIGH);
+    tone(BUZZER_PIN, 300, 200);
+    delay(200);
+    digitalWrite(LED_PIN, LOW);
+    noTone(BUZZER_PIN);
+    delay(200);
+  }
+}
+
+void retryWiFiConnection() {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi connection lost. Attempting to reconnect...");
+    WiFi.begin(ssid, password);
+    int retries = 0;
+    while (WiFi.status() != WL_CONNECTED && retries < 10) {
+      delay(500);
+      Serial.print(".");
+      retries++;
+    }
+    if (WiFi.status() == WL_CONNECTED) {
+      Serial.println("\nWiFi reconnected!");
+    } else {
+      Serial.println("\nFailed to reconnect to WiFi");
+    }
+  }
+}
 
 void setup() {
   Serial.begin(115200);
-  SPI.begin();          // Initialize SPI bus
-  mfrc522.PCD_Init();   // Initialize MFRC522
+  SPI.begin();
+  mfrc522.PCD_Init();
 
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
@@ -43,15 +81,27 @@ void setup() {
     Serial.print(".");
   }
   Serial.println("\nConnected to Wi-Fi");
+  Serial.print("Local IP: ");
+  Serial.println(WiFi.localIP());
 
-  // Time synchronization
-  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
-  Serial.print("Synchronizing time");
-  while (time(nullptr) < 100000) {
+  // Test server connection
+  testServerConnection();
+
+  // Time synchronization for Kenya (EAT timezone, UTC+3)
+  configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+  Serial.print("Synchronizing time for Kenya (EAT, UTC+3)");
+  time_t now = time(nullptr);
+  while (now < 100000) {
     Serial.print(".");
     delay(500);
+    now = time(nullptr);
   }
   Serial.println("\nTime synchronized");
+  
+  // Display current time after synchronization
+  String currentTime = getTimeStamp();
+  Serial.print("Current time in Kenya: ");
+  Serial.println(currentTime);
 
   Serial.println("Place your card on the reader...");
 }
@@ -59,9 +109,10 @@ void setup() {
 void loop() {
   // Look for new cards
   if (!mfrc522.PICC_IsNewCardPresent()) {
-    Serial.println("No new card present");
+    delay(100); // Small delay to prevent CPU hogging
     return;
   }
+  
   if (!mfrc522.PICC_ReadCardSerial()) {
     Serial.println("Failed to read card");
     return;
@@ -102,94 +153,347 @@ void loop() {
 }
 
 bool checkAccess(String uid) {
-  if (WiFi.status() == WL_CONNECTED) {
-    WiFiClient client; // Create WiFiClient instance
-    HTTPClient http;
-    String url = String(serverName) + "/api/user/" + uid;
-    http.begin(client, url); // Use updated begin()
+  // Check WiFi connection first
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi disconnected! Attempting to reconnect...");
+    retryWiFiConnection();
+    if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("Failed to reconnect to WiFi. Cannot check access.");
+      return false;
+    }
+  }
 
-    Serial.print("Sending GET request to: ");
-    Serial.println(url);
+  // Debug WiFi connection
+  Serial.print("WiFi connected with IP: ");
+  Serial.println(WiFi.localIP());
 
-    int httpCode = http.GET();
-    if (httpCode > 0) {  // Check for valid response
-      Serial.printf("HTTP response code: %d\n", httpCode);
-      if (httpCode == HTTP_CODE_OK) {
-        String payload = http.getString();
-        Serial.println("Response: " + payload);
-
-        // Log access attempt
-        logAccess(uid);
-
-        http.end();
-        return true;
-      } else if (httpCode == HTTP_CODE_NOT_FOUND) {
-        Serial.println("User not found");
-        http.end();
-        return false;
+  WiFiClient client;
+  HTTPClient http;
+  
+  // Use the hotspot IP address
+  String url = String(serverName) + "/api/user/" + uid;
+  
+  Serial.print("Connecting to URL: ");
+  Serial.println(url);
+  
+  // Begin HTTP request
+  http.begin(client, url);
+  http.setTimeout(10000); // 10 second timeout
+  
+  Serial.println("Sending GET request...");
+  int httpCode = http.GET();
+  
+  Serial.print("HTTP response code: ");
+  Serial.println(httpCode);
+  
+  if (httpCode > 0) {  // Check for valid response
+    if (httpCode == HTTP_CODE_OK) {
+      String payload = http.getString();
+      Serial.println("Response payload: " + payload);
+      
+      // Parse JSON to extract user information
+      StaticJsonDocument<256> doc;
+      DeserializationError error = deserializeJson(doc, payload);
+      
+      if (!error) {
+        // Check if name field exists
+        if (doc.containsKey("name")) {
+          // Extract user name from JSON response
+          String userName = doc["name"].as<String>();
+          
+          // Check if the authorized field exists and default to true if missing
+          bool accessGranted = true;
+          if (doc.containsKey("authorized")) {
+            accessGranted = doc["authorized"].as<bool>();
+          }
+          
+          // Display the user's name
+          Serial.print("Welcome, ");
+          Serial.println(userName);
+          
+          // Log access attempt
+          logAccess(uid, accessGranted);
+          
+          http.end();
+          return accessGranted;
+        } else {
+          Serial.println("Error: JSON response missing 'name' field");
+          logAccess(uid, false);
+          http.end();
+          return false;
+        }
       } else {
-        Serial.printf("Server returned code: %d\n", httpCode);
+        Serial.print("JSON parsing error: ");
+        Serial.println(error.c_str());
+        logAccess(uid, false);
         http.end();
         return false;
       }
+    } else if (httpCode == HTTP_CODE_NOT_FOUND) {
+      Serial.println("User not found");
+      logAccess(uid, false);
+      http.end();
+      return false;
     } else {
-      Serial.printf("HTTP GET failed: %s\n", http.errorToString(httpCode).c_str());
+      Serial.printf("Server returned error code: %d\n", httpCode);
+      logAccess(uid, false);
       http.end();
       return false;
     }
   } else {
-    Serial.println("Wi-Fi not connected");
+    Serial.printf("HTTP GET failed: %s\n", http.errorToString(httpCode).c_str());
+    http.end();
     return false;
   }
 }
 
-void logAccess(String uid) {
-  if (WiFi.status() == WL_CONNECTED) {
-    WiFiClient client; // Create WiFiClient instance
-    HTTPClient http;
-    String url = String(serverName) + "/api/log";
+bool addNewUser(String uid, String userName) {
+  if (WiFi.status() != WL_CONNECTED) {
+    retryWiFiConnection();
+    if (WiFi.status() != WL_CONNECTED) return false;
+  }
 
-    http.begin(client, url); // Use updated begin()
-    http.addHeader("Content-Type", "application/json");
+  WiFiClient client;
+  HTTPClient http;
+  String url = String(serverName) + "/api/add_user";
+  
+  http.begin(client, url);
+  http.addHeader("Content-Type", "application/json");
 
-    String jsonData = "{\"uid\":\"" + uid + "\",\"userName\":\"\",\"timestamp\":\"" + getTimeStamp() + "\"}";
+  StaticJsonDocument<200> doc;
+  doc["uid"] = uid;
+  doc["name"] = userName;
+  String jsonData;
+  serializeJson(doc, jsonData);
 
-    Serial.print("Sending POST request to: ");
-    Serial.println(url);
-    Serial.print("JSON data: ");
-    Serial.println(jsonData);
+  int httpCode = http.POST(jsonData);
+  bool success = false;
 
-    int httpCode = http.POST(jsonData);
-    if (httpCode > 0) {  // Check for valid response
-      Serial.printf("HTTP response code: %d\n", httpCode);
-      if (httpCode == HTTP_CODE_OK) {
-        String payload = http.getString();
-        Serial.println("Log Response: " + payload);
-      } else {
-        Serial.printf("Server returned code: %d\n", httpCode);
+  if (httpCode > 0) {
+    if (httpCode == HTTP_CODE_OK) {
+      success = true;
+      Serial.println("User added successfully");
+    } else {
+      Serial.printf("Failed to add user. HTTP code: %d\n", httpCode);
+    }
+  } else {
+    Serial.printf("HTTP POST failed: %s\n", http.errorToString(httpCode).c_str());
+  }
+
+  http.end();
+  return success;
+}
+
+bool updateUserName(String uid, String newName) {
+  if (WiFi.status() != WL_CONNECTED) {
+    retryWiFiConnection();
+    if (WiFi.status() != WL_CONNECTED) return false;
+  }
+
+  WiFiClient client;
+  HTTPClient http;
+  String url = String(serverName) + "/api/update_user";
+  
+  http.begin(client, url);
+  http.addHeader("Content-Type", "application/json");
+
+  StaticJsonDocument<200> doc;
+  doc["uid"] = uid;
+  doc["name"] = newName;
+  String jsonData;
+  serializeJson(doc, jsonData);
+
+  int httpCode = http.PUT(jsonData);
+  bool success = false;
+
+  if (httpCode > 0) {
+    if (httpCode == HTTP_CODE_OK) {
+      success = true;
+      Serial.println("User updated successfully");
+    } else {
+      Serial.printf("Failed to update user. HTTP code: %d\n", httpCode);
+    }
+  } else {
+    Serial.printf("HTTP PUT failed: %s\n", http.errorToString(httpCode).c_str());
+  }
+
+  http.end();
+  return success;
+}
+
+void logAccess(String uid, bool accessGranted) {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi disconnected. Cannot log access.");
+    return;
+  }
+
+  // Get current timestamp
+  String timestamp = getTimeStamp();
+  Serial.print("Logging access at time: ");
+  Serial.println(timestamp);
+
+  WiFiClient client;
+  HTTPClient http;
+  
+  String url = String(serverName) + "/api/log";
+  
+  http.begin(client, url);
+  http.addHeader("Content-Type", "application/json");
+  
+  // Create JSON payload
+  StaticJsonDocument<256> doc;
+  doc["uid"] = uid;
+  doc["accessGranted"] = accessGranted;
+  doc["timestamp"] = timestamp; // Using the format YYYY-MM-DD HH:MM:SS
+  doc["accessPoint"] = "School of Engineering";
+  doc["accessType"] = "time_in";
+  
+  String jsonPayload;
+  serializeJson(doc, jsonPayload);
+  
+  // Debug the payload
+  Serial.print("Sending JSON payload: ");
+  Serial.println(jsonPayload);
+  
+  int httpCode = http.POST(jsonPayload);
+  
+  if (httpCode > 0) {
+    if (httpCode == HTTP_CODE_OK) {
+      Serial.println("Access logged successfully");
+      
+      // Let's also print the server response if available
+      String response = http.getString();
+      if (response.length() > 0) {
+        Serial.print("Server response: ");
+        Serial.println(response);
       }
     } else {
-      Serial.printf("HTTP POST failed: %s\n", http.errorToString(httpCode).c_str());
+      Serial.printf("Failed to log access. HTTP code: %d\n", httpCode);
+      // Print response body which might contain error details
+      String errorResponse = http.getString();
+      Serial.print("Error details: ");
+      Serial.println(errorResponse);
     }
-    http.end();
   } else {
-    Serial.println("Wi-Fi not connected");
+    Serial.printf("HTTP POST failed: %s\n", http.errorToString(httpCode).c_str());
   }
+  
+  http.end();
 }
 
 String getTimeStamp() {
   time_t now = time(nullptr);
   struct tm* p_tm = localtime(&now);
-
-  char timeStr[50]; // Increased buffer size
-
-  snprintf(timeStr, sizeof(timeStr), "%04d-%02d-%02dT%02d:%02d:%02d",
+  
+  char timeStr[20];
+  // Format the date as YYYY-MM-DD HH:MM:SS which is the exact format needed
+  snprintf(timeStr, sizeof(timeStr), "%04d-%02d-%02d %02d:%02d:%02d",
            p_tm->tm_year + 1900,
            p_tm->tm_mon + 1,
            p_tm->tm_mday,
            p_tm->tm_hour,
            p_tm->tm_min,
            p_tm->tm_sec);
-
+  
   return String(timeStr);
+}
+
+void testServerConnection() {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi not connected. Cannot test server.");
+    return;
+  }
+  
+  WiFiClient client;
+  HTTPClient http;
+  
+  Serial.println("\nNetwork Information:");
+  Serial.print("ESP8266 IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.print("Subnet Mask: ");
+  Serial.println(WiFi.subnetMask());
+  Serial.print("Gateway IP: ");
+  Serial.println(WiFi.gatewayIP());
+  
+  // Test connection to server base URL
+  Serial.print("Testing connection to: ");
+  Serial.println(serverName);
+  
+  http.begin(client, serverName);
+  http.setTimeout(5000);
+  
+  int httpCode = http.GET();
+  
+  if (httpCode > 0) {
+    Serial.printf("Response code: %d\n", httpCode);
+    if (httpCode == HTTP_CODE_OK) {
+      Serial.println("Server base URL is accessible!");
+    } else {
+      Serial.println("Server returned non-OK response.");
+    }
+  } else {
+    Serial.printf("Connection failed: %s\n", http.errorToString(httpCode).c_str());
+  }
+  
+  http.end();
+  delay(1000);
+  
+  // Test API test endpoint
+  String testUrl = String(serverName) + "/api/test";
+  Serial.print("Testing API endpoint: ");
+  Serial.println(testUrl);
+  
+  http.begin(client, testUrl);
+  http.setTimeout(5000);
+  
+  httpCode = http.GET();
+  
+  if (httpCode > 0) {
+    Serial.printf("Response code: %d\n", httpCode);
+    if (httpCode == HTTP_CODE_OK) {
+      String payload = http.getString();
+      Serial.println("Response: " + payload);
+      Serial.println("API endpoint is working!");
+    } else {
+      Serial.println("API endpoint returned non-OK response.");
+    }
+  } else {
+    Serial.printf("Connection to API failed: %s\n", http.errorToString(httpCode).c_str());
+  }
+  
+  http.end();
+  
+  // Test ping to the server by IP rather than hostname
+  IPAddress serverIP;
+  String serverHost = String(serverName).substring(7); // Remove "http://"
+  int colonPos = serverHost.indexOf(':');
+  if (colonPos > 0) {
+    serverHost = serverHost.substring(0, colonPos); // Remove port if present
+  }
+  
+  Serial.println("\nChecking server connection via IP...");
+  if (WiFi.hostByName(serverHost.c_str(), serverIP)) {
+    Serial.print("Resolved server IP: ");
+    Serial.println(serverIP);
+    
+    // Check if ESP8266 and server are on same subnet
+    IPAddress espIP = WiFi.localIP();
+    IPAddress espSubnet = WiFi.subnetMask();
+    
+    boolean sameSubnet = true;
+    for (int i = 0; i < 4; i++) {
+      if ((espIP[i] & espSubnet[i]) != (serverIP[i] & espSubnet[i])) {
+        sameSubnet = false;
+      }
+    }
+    
+    if (sameSubnet) {
+      Serial.println("ESP8266 and server are on the same subnet - good!");
+    } else {
+      Serial.println("WARNING: ESP8266 and server appear to be on different subnets!");
+      Serial.println("This may cause connection problems.");
+    }
+  } else {
+    Serial.println("Failed to resolve server hostname.");
+  }
 }
