@@ -17,8 +17,8 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);
 #define LED_PIN D2      // GPIO4
 
 // Wi-Fi credentials
-const char* ssid = "657";
-const char* password = "12345678";
+const char* ssid = "A9";
+const char* password = "BChesang@123";
 
 // Server details
 // Update this line to use your PC's hotspot IP address
